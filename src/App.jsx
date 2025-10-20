@@ -265,11 +265,10 @@ function App() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box mb={3}>
         <Typography variant="h4" gutterBottom>
-          Slutprisanalys av bostäder i Mora
+          Prisutveckling inför budgivning på Älvgatan 23
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Få en snabb översikt över genomsnitt, median och försäljningsvolym
-          från Booli och Hemnet.
+          Egen analys som sammanfattar tidigare slutpriser och marknadsläge i området för att ge stöd inför förhandlingar kring Älvgatan 23.
         </Typography>
       </Box>
 
