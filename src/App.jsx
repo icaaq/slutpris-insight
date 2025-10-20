@@ -63,6 +63,7 @@ function App() {
   const [soldDateRange, setSoldDateRange] = useState(DEFAULT_SOLD_RANGE);
   const [sortField, setSortField] = useState("soldDate");
   const [viewMode, setViewMode] = useState("table");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [isSliding, setIsSliding] = useState(false);
   const sliderTimeoutRef = useRef(null);
 
@@ -158,6 +159,13 @@ function App() {
     const excluded = [];
 
     allProperties.forEach((property) => {
+      const matchesSource =
+        sourceFilter === "all" || property.source === sourceFilter;
+
+      if (!matchesSource) {
+        return;
+      }
+
       const priceMatch =
         property.askingPrice >= minPrice && property.askingPrice <= maxPrice;
       const saleTimestamp = getSoldTimestamp(property);
@@ -179,6 +187,7 @@ function App() {
     priceBounds.max,
     appliedPriceRange,
     soldAfterTimestamp,
+    sourceFilter,
   ]);
 
   const sortedIncluded = useMemo(
@@ -192,6 +201,14 @@ function App() {
   );
 
   const stats = useMemo(() => calculateStats(sortedIncluded), [sortedIncluded]);
+  const primaryIncludedCount = useMemo(
+    () => sortedIncluded.filter((property) => !property.excludeFromStats).length,
+    [sortedIncluded]
+  );
+  const primaryTotalCount = useMemo(
+    () => allProperties.filter((property) => !property.excludeFromStats).length,
+    [allProperties]
+  );
 
   const handleSliderChange = (_, newValue) => {
     if (!Array.isArray(newValue)) return;
@@ -232,6 +249,12 @@ function App() {
     setSoldDateRange(event.target.value);
   };
 
+  const handleSourceFilterChange = (_, value) => {
+    if (value) {
+      setSourceFilter(value);
+    }
+  };
+
   const handleViewModeChange = (_, value) => {
     if (value) {
       setViewMode(value);
@@ -248,6 +271,7 @@ function App() {
       sliderTimeoutRef.current = null;
     }
     setSoldDateRange(DEFAULT_SOLD_RANGE);
+    setSourceFilter("all");
   };
 
   useEffect(() => {
@@ -351,6 +375,25 @@ function App() {
                 ))}
               </Select>
             </FormControl>
+            <Stack spacing={1} mt={2}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}
+              >
+                Källor
+              </Typography>
+              <ToggleButtonGroup
+                value={sourceFilter}
+                exclusive
+                onChange={handleSourceFilterChange}
+                size="small"
+              >
+                <ToggleButton value="all">Alla</ToggleButton>
+                <ToggleButton value="hemnet">Hemnet</ToggleButton>
+                <ToggleButton value="booli">Booli</ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
             <Button
               variant="outlined"
               onClick={handleResetFilters}
@@ -401,7 +444,7 @@ function App() {
             <Grid item xs={12} md={4}>
               <StatCard
                 title="Fördelning"
-                value={`${sortedIncluded.length} / ${allProperties.length}`}
+                value={`${primaryIncludedCount} / ${primaryTotalCount}`}
                 subtitle="Inkluderade / Totalt"
               />
             </Grid>
@@ -471,7 +514,10 @@ function CardView({ included, excluded }) {
           <Grid container spacing={2.5}>
             {included.map((property) => (
               <Grid key={property.id} item xs={12} sm={6} md={4}>
-                <PropertyCard property={property} />
+                <PropertyCard
+                  property={property}
+                  muted={property.excludeFromStats}
+                />
               </Grid>
             ))}
           </Grid>
@@ -498,7 +544,13 @@ function CardView({ included, excluded }) {
 
 function PropertyCard({ property, muted = false }) {
   const percentage = Number(property.percentChange) || 0;
-  const percentageColor = percentage >= 0 ? "success" : "error";
+  const isShadow = Boolean(property.excludeFromStats);
+  const cardMuted = muted || isShadow;
+  const percentageColor = cardMuted
+    ? "default"
+    : percentage >= 0
+    ? "success"
+    : "error";
   const linkEntries = getLinkEntries(property);
   const isMatched = Boolean(property.matchedGroupId);
 
@@ -506,11 +558,11 @@ function PropertyCard({ property, muted = false }) {
     <Card
       variant="outlined"
       sx={{
-        opacity: muted ? 0.55 : 1,
+        opacity: cardMuted ? 0.45 : 1,
         transition: "box-shadow 0.2s ease, border-color 0.2s ease",
         "&:hover": {
-          borderColor: muted ? "divider" : "secondary.light",
-          boxShadow: muted ? "none" : "0 12px 24px rgba(15, 23, 42, 0.12)",
+          borderColor: cardMuted ? "divider" : "secondary.light",
+          boxShadow: cardMuted ? "none" : "0 12px 24px rgba(15, 23, 42, 0.12)",
         },
       }}
     >
@@ -560,6 +612,7 @@ function PropertyCard({ property, muted = false }) {
           <Chip
             label={`${percentage >= 0 ? "+" : ""}${percentage.toFixed(1)}%`}
             color={percentageColor}
+            variant={cardMuted ? "outlined" : "filled"}
             sx={{ fontWeight: 600 }}
           />
           {linkEntries.length > 0 && (
@@ -621,12 +674,14 @@ function TableView({ included, excluded }) {
             const includedRow = includedIds.has(property.id);
             const percentage = Number(property.percentChange) || 0;
             const linkEntries = getLinkEntries(property);
+            const isShadow = Boolean(property.excludeFromStats);
 
             return (
               <TableRow
                 key={property.id}
                 sx={{
-                  opacity: includedRow ? 1 : 0.55,
+                  opacity: includedRow && !isShadow ? 1 : 0.45,
+                  fontStyle: isShadow ? "italic" : "normal",
                 }}
               >
                 <TableCell
@@ -639,7 +694,16 @@ function TableView({ included, excluded }) {
                   {percentage >= 0 ? "+" : ""}
                   {percentage.toFixed(1)}%
                 </TableCell>
-                <TableCell>{property.address}</TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={600}>
+                    {property.address}
+                  </Typography>
+                  {property.matchedGroupId && (
+                    <Typography variant="caption" color="secondary.main">
+                      {formatMatchLabel(property)}
+                    </Typography>
+                  )}
+                </TableCell>
                 <TableCell>{property.area}</TableCell>
                 <TableCell align="right">
                   {formatPrice(property.askingPrice)} kr
@@ -674,11 +738,11 @@ function TableView({ included, excluded }) {
                             color: "secondary.main",
                             "&:hover": {
                               color: "secondary.dark",
-                              textDecoration: "underline",
-                            },
-                          }}
+                            textDecoration: "underline",
+                          },
+                        }}
                         >
-                          {entry.label}
+                          Visa {entry.label} →
                         </Button>
                       ))}
                     </Stack>
@@ -781,16 +845,35 @@ function EmptyState({ message }) {
 }
 
 function SourceChipGroup({ property, size = "small" }) {
-  const entries = getSourceEntries(property);
+  const rawEntries = getSourceEntries(property);
 
-  if (!entries.length) {
+  if (!rawEntries.length) {
     return null;
   }
+
+  const deduped = new Map();
+  rawEntries.forEach((entry) => {
+    const existing = deduped.get(entry.source);
+    if (!existing) {
+      deduped.set(entry.source, { ...entry });
+    } else if (entry.isSelf && !existing.isSelf) {
+      deduped.set(entry.source, { ...existing, isSelf: true });
+    }
+  });
+
+  const entries = Array.from(deduped.values()).sort((a, b) => {
+    if (a.isSelf === b.isSelf) {
+      return 0;
+    }
+    return a.isSelf ? -1 : 1;
+  });
 
   return (
     <Stack direction="row" spacing={0.5} flexWrap="wrap">
       {entries.map((entry, index) => {
-        const styles = getSourceChipStyle(entry.source);
+        const styles = getSourceChipStyle(entry.source, {
+          active: Boolean(entry.isSelf),
+        });
         const key = `${entry.source}-${entry.id || index}`;
 
         return (
@@ -827,37 +910,61 @@ function getSourceEntries(property) {
     return combined.map((entry) => ({
       source: entry.source,
       id: entry.id,
+      isSelf: entry.id === property.id,
     }));
   }
 
-  return property.source ? [{ source: property.source, id: property.id }] : [];
+  return property.source
+    ? [{ source: property.source, id: property.id, isSelf: true }]
+    : [];
 }
 
-function getSourceChipStyle(source) {
+function getSourceChipStyle(source, { active = false } = {}) {
   if (source === "hemnet") {
-    return {
-      label: "Hemnet",
-      bgcolor: "rgba(22, 163, 74, 0.16)",
-      color: "rgba(22, 101, 52, 0.95)",
-      borderColor: "rgba(22, 163, 74, 0.35)",
-    };
+    return active
+      ? {
+          label: "Hemnet",
+          bgcolor: "rgba(22, 163, 74, 0.9)",
+          color: "#f0fdf4",
+          borderColor: "rgba(22, 163, 74, 0.95)",
+        }
+      : {
+          label: "Hemnet",
+          bgcolor: "rgba(22, 163, 74, 0.16)",
+          color: "rgba(22, 101, 52, 0.95)",
+          borderColor: "rgba(22, 163, 74, 0.35)",
+        };
   }
 
   if (source === "booli") {
-    return {
-      label: "Booli",
-      bgcolor: "rgba(17, 24, 39, 0.12)",
-      color: "#111827",
-      borderColor: "rgba(17, 24, 39, 0.35)",
-    };
+    return active
+      ? {
+          label: "Booli",
+          bgcolor: "#111827",
+          color: "#f9fafb",
+          borderColor: "#0f172a",
+        }
+      : {
+          label: "Booli",
+          bgcolor: "rgba(17, 24, 39, 0.12)",
+          color: "#111827",
+          borderColor: "rgba(17, 24, 39, 0.35)",
+        };
   }
 
-  return {
-    label: "Matchad",
-    bgcolor: "rgba(79, 70, 229, 0.12)",
-    color: "rgba(67, 56, 202, 0.95)",
-    borderColor: "rgba(79, 70, 229, 0.35)",
-  };
+  return active
+    ? {
+        label: "Matchad",
+        bgcolor: "rgba(79, 70, 229, 0.45)",
+        color: "#ede9fe",
+        borderColor: "rgba(79, 70, 229, 0.7)",
+      }
+    : {
+        label: "Matchad",
+        bgcolor: "rgba(79, 70, 229, 0.12)",
+        color: "rgba(67, 56, 202, 0.95)",
+        borderColor: "rgba(79, 70, 229, 0.35)",
+      };
 }
 
 function getLinkEntries(property) {
@@ -879,10 +986,16 @@ function getLinkEntries(property) {
   }
 
   if (entries.length === 0 && property.url) {
+    const fallbackLabel =
+      property.source === "hemnet"
+        ? "Hemnet"
+        : property.source === "booli"
+        ? "Booli"
+        : "annons";
     entries.push({
       source: property.source || "kombinerad",
       href: property.url,
-      label: "annons",
+      label: fallbackLabel,
     });
   }
 
@@ -899,7 +1012,9 @@ function getLinkEntries(property) {
 
 function formatMatchLabel(property) {
   if (!property?.matchedEntries) {
-    return "Matchning av flera källor";
+    return property.isMatchedSecondary
+      ? "Sekundär post"
+      : "Matchning av flera källor";
   }
 
   const sources = [];
@@ -911,7 +1026,13 @@ function formatMatchLabel(property) {
   }
 
   if (!sources.length) {
-    return "Matchning av flera källor";
+    return property.isMatchedSecondary
+      ? "Sekundär post"
+      : "Matchning av flera källor";
+  }
+
+  if (property.isMatchedSecondary) {
+    return `Sekundär post (${sources.join(" & ")})`;
   }
 
   if (sources.length === 1) {
@@ -1235,6 +1356,9 @@ function sortProperties(properties, field) {
     const valueB = fieldGetter(b);
 
     if (valueA === valueB) {
+      if (a.excludeFromStats !== b.excludeFromStats) {
+        return a.excludeFromStats ? 1 : -1;
+      }
       return 0;
     }
     if (valueA === null || valueA === undefined) {
@@ -1249,11 +1373,13 @@ function sortProperties(properties, field) {
 }
 
 function calculateStats(properties) {
-  if (!properties.length) {
+  const usable = properties.filter((property) => !property.excludeFromStats);
+
+  if (!usable.length) {
     return { average: 0, median: 0 };
   }
 
-  const percentages = properties
+  const percentages = usable
     .map((property) => property.percentChange)
     .filter((value) => typeof value === "number" && !Number.isNaN(value));
 
@@ -1326,6 +1452,7 @@ function mergeSources({ booli, hemnet }) {
     if (bestCandidate && bestScore.score <= 3) {
       matchedBooliIds.add(booliEntry.id);
       matchedHemnetIds.add(bestCandidate.id);
+
       const groupId = `group-${groups.length + 1}`;
       groups.push({
         id: groupId,
@@ -1336,7 +1463,15 @@ function mergeSources({ booli, hemnet }) {
     }
   });
 
-  const mergedRecords = groups.map((group) => createMergedRecord(group));
+  const primaryRecords = [];
+  const secondaryRecords = [];
+
+  groups.forEach((group, index) => {
+    const prepared = createGroupRecords(group, index + 1);
+    primaryRecords.push(prepared.primary);
+    secondaryRecords.push(...prepared.secondary);
+    groups[index] = prepared.groupSummary;
+  });
 
   const unmatchedBooli = normalizedBooli.filter(
     (entry) => !matchedBooliIds.has(entry.id)
@@ -1346,8 +1481,90 @@ function mergeSources({ booli, hemnet }) {
   );
 
   return {
-    combined: [...mergedRecords, ...unmatchedBooli, ...unmatchedHemnet],
+    combined: [
+      ...primaryRecords,
+      ...secondaryRecords,
+      ...unmatchedBooli,
+      ...unmatchedHemnet,
+    ],
     groups,
+  };
+}
+
+function createGroupRecords(group, index) {
+  const booli = group.booli || [];
+  const hemnet = group.hemnet || [];
+  const groupId = `group-${index}`;
+
+  const matchedEntries = {
+    booli: booli.map((entry) => ({ ...entry })),
+    hemnet: hemnet.map((entry) => ({ ...entry })),
+  };
+
+  const allEntries = [...booli, ...hemnet];
+  const primaryEntry = hemnet[0] || booli[0];
+
+  const askingPrice = getPreferredValue(
+    allEntries,
+    "askingPrice",
+    primaryEntry.askingPrice
+  );
+  const finalPrice = getPreferredValue(
+    allEntries,
+    "finalPrice",
+    primaryEntry.finalPrice
+  );
+
+  let percentChange = null;
+  if (Number.isFinite(askingPrice) && Number.isFinite(finalPrice) && askingPrice) {
+    percentChange = ((finalPrice - askingPrice) / askingPrice) * 100;
+  }
+  if (!Number.isFinite(percentChange)) {
+    percentChange = getPreferredValue(
+      allEntries,
+      "percentChange",
+      primaryEntry.percentChange
+    );
+  }
+
+  const primaryRecord = {
+    ...primaryEntry,
+    askingPrice: Number.isFinite(askingPrice)
+      ? askingPrice
+      : primaryEntry.askingPrice,
+    finalPrice: Number.isFinite(finalPrice)
+      ? finalPrice
+      : primaryEntry.finalPrice,
+    percentChange: Number.isFinite(percentChange)
+      ? percentChange
+      : primaryEntry.percentChange,
+    matchedGroupId: groupId,
+    matchedEntries,
+    excludeFromStats: false,
+    isMatchedPrimary: true,
+  };
+
+  const secondaryRecords = allEntries
+    .filter((entry) => entry.id !== primaryEntry.id)
+    .map((entry) => ({
+      ...entry,
+      matchedGroupId: groupId,
+      matchedEntries,
+      excludeFromStats: true,
+      isMatchedSecondary: true,
+      shadowOfId: primaryEntry.id,
+    }));
+
+  return {
+    primary: primaryRecord,
+    secondary: secondaryRecords,
+    groupSummary: {
+      id: groupId,
+      booli: matchedEntries.booli,
+      hemnet: matchedEntries.hemnet,
+      primarySource: primaryRecord.source,
+      matchScore: group.matchScore,
+    },
   };
 }
 
@@ -1410,39 +1627,6 @@ function evaluateMatch(a, b) {
     finalDiff,
     askingDiff,
     percentDiff,
-  };
-}
-
-function createMergedRecord(group) {
-  const { booli, hemnet, id } = group;
-  const orderedEntries = [...booli, ...hemnet];
-  const primary = booli[0] || hemnet[0];
-
-  const askingPrice = getPreferredValue(orderedEntries, "askingPrice", primary.askingPrice);
-  const finalPrice = getPreferredValue(orderedEntries, "finalPrice", primary.finalPrice);
-
-  let percentChange = null;
-  if (Number.isFinite(askingPrice) && Number.isFinite(finalPrice) && askingPrice) {
-    percentChange = ((finalPrice - askingPrice) / askingPrice) * 100;
-  }
-  if (!Number.isFinite(percentChange)) {
-    percentChange = getPreferredValue(orderedEntries, "percentChange", primary.percentChange);
-  }
-
-  return {
-    ...primary,
-    id: `${primary.id}-merged`,
-    source: "kombinerad",
-    askingPrice: Number.isFinite(askingPrice) ? askingPrice : primary.askingPrice,
-    finalPrice: Number.isFinite(finalPrice) ? finalPrice : primary.finalPrice,
-    percentChange: Number.isFinite(percentChange)
-      ? percentChange
-      : primary.percentChange,
-    matchedGroupId: id,
-    matchedEntries: {
-      booli: booli.map((entry) => ({ ...entry })),
-      hemnet: hemnet.map((entry) => ({ ...entry })),
-    },
   };
 }
 
