@@ -39,7 +39,6 @@ const SOLD_DATE_OPTIONS = [
   { value: "2y", label: "Senaste 2 åren" },
   { value: "3y", label: "Senaste 3 åren" },
   { value: "4y", label: "Senaste 4 åren" },
-  { value: "5y", label: "Senaste 5 åren" },
 ];
 
 const SORT_FIELDS = [
