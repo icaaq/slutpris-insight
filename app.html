@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slutprisanalys</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        .filter-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .price-range-container {
+            padding: 20px 10px;
+        }
+
+        .price-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .price-value {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+        .price-inputs {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .price-inputs div {
+            flex: 1 1 200px;
+        }
+
+        .price-inputs input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .price-inputs input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        /* Range slider styling */
+        .range-slider {
+            position: relative;
+            height: 60px;
+        }
+
+        .range-slider input[type="range"] {
+            position: absolute;
+            width: 100%;
+            height: 8px;
+            top: 26px;
+            margin: 0;
+            background: transparent;
+            pointer-events: none;
+            -webkit-appearance: none;
+        }
+
+        .range-slider input[type="range"]:first-of-type {
+            z-index: 3;
+        }
+
+        .range-slider input[type="range"]:last-of-type {
+            z-index: 2;
+        }
+
+        .range-slider input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: all;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-slider input[type="range"]::-moz-range-thumb {
+            pointer-events: all;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .range-slider input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .range-slider input[type="range"]::-moz-range-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .slider-track {
+            position: absolute;
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            top: 26px;
+        }
+
+        .slider-range {
+            position: absolute;
+            height: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            top: 26px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .preset-btn {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-btn:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .preset-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .sort-controls {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-input-group select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 200px;
+        }
+
+        .filter-input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .sort-controls select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 180px;
+        }
+
+        .sort-controls select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+        }
+
+        .sort-order-btn {
+            padding: 10px 18px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        button.active {
+            background: #28a745;
+        }
+
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .stat-card .value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-duo {
+            display: flex;
+            justify-content: space-around;
+            gap: 12px;
+        }
+
+        .stat-subgroup {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: 6px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: #333;
+            font-size: 24px;
+        }
+
+        /* Card View */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .property-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .property-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .property-card.excluded {
+            opacity: 0.6;
+            background: #f8f9fa;
+        }
+
+        .source-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .property-card .source-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+
+        table .source-badge {
+            position: static;
+            margin-right: 0;
+        }
+
+        .source-badge.booli {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .source-badge.hemnet {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .property-card h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+            padding-right: 80px;
+        }
+
+        .property-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .percentage {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .percentage.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .percentage.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Table View */
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 40px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        tr.excluded {
+            opacity: 0.6;
+            background: #fafafa;
+        }
+
+        .link-button {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-button:hover {
+            text-decoration: underline;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 18px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .divider {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 40px 0 30px 0;
+        }
+
+        .section-title {
+            color: #999;
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Slutprisanalys</h1>
+        <p class="subtitle">Analysera försäljningar från Booli och Hemnet</p>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="priceSliderMin">Prisintervall (utgångspris)</label>
+                <div class="price-range-container">
+                    <div class="price-labels">
+                        <span class="price-value" id="sliderMinLabel">-</span>
+                        <span class="price-value" id="sliderMaxLabel">-</span>
+                    </div>
+                    <div class="range-slider">
+                        <div class="slider-track"></div>
+                        <div class="slider-range" id="sliderRange"></div>
+                        <input type="range" id="priceSliderMin" min="0" max="0" value="0" step="50000" oninput="handleMinSliderInput(this.value)">
+                        <input type="range" id="priceSliderMax" min="0" max="0" value="0" step="50000" oninput="handleMaxSliderInput(this.value)">
+                    </div>
+                    <div class="price-inputs">
+                        <div>
+                            <label for="minPrice">Min utgångspris (kr)</label>
+                            <input type="number" id="minPrice" value="0" min="0" step="50000" onchange="handleMinInputChange(this.value)">
+                        </div>
+                        <div>
+                            <label for="maxPrice">Max utgångspris (kr)</label>
+                            <input type="number" id="maxPrice" value="0" min="0" step="50000" onchange="handleMaxInputChange(this.value)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-group">
+                <div class="filter-input-group">
+                    <label for="soldDateRange">Visa försäljningar sålda efter</label>
+                    <select id="soldDateRange" onchange="handleDateFilterChange()">
+                        <option value="all">Visa alla datum</option>
+                        <option value="6m">Senaste 6 månaderna</option>
+                        <option value="1y">Senaste 1 året</option>
+                        <option value="2y">Senaste 2 åren</option>
+                        <option value="3y">Senaste 3 åren</option>
+                        <option value="4y">Senaste 4 åren</option>
+                        <option value="5y">Senaste 5 åren</option>
+                    </select>
+                </div>
+            </div>
+            <div class="view-toggle">
+                <button id="applyFilter" onclick="applyFilter()">Applicera filter</button>
+                <button class="secondary" onclick="resetFilter()">Återställ</button>
+                <button id="cardViewBtn" class="active" onclick="showCardView()">Kortvy</button>
+                <button id="tableViewBtn" class="secondary" onclick="showTableView()">Tabellvy</button>
+            </div>
+            <div class="sort-controls">
+                <div>
+                    <label for="sortField">Sortera efter</label>
+                    <select id="sortField" onchange="changeSortField(this.value)">
+                        <option value="soldDate">Såld datum</option>
+                        <option value="askingPrice">Utgångspris</option>
+                        <option value="finalPrice">Slutpris</option>
+                        <option value="percentChange">Skillnad</option>
+                    </select>
+                </div>
+                <button type="button" id="sortDirectionBtn" class="secondary sort-order-btn" onclick="toggleSortDirection()">Fallande ↓</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading hidden">Laddar data...</div>
+        <div id="error" class="error hidden"></div>
+
+        <div id="statsSection" class="stats-section hidden">
+            <div class="stat-card">
+                <h3>Förändring (inkluderade)</h3>
+                <div class="stat-duo">
+                    <div class="stat-subgroup">
+                        <div class="stat-label">Genomsnitt</div>
+                        <div class="value" id="avgIncluded">-</div>
+                    </div>
+                    <div class="stat-subgroup">
+                        <div class="stat-label">Median</div>
+                        <div class="value" id="medianIncluded">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>Inkluderade</h3>
+                <div class="value" id="countIncluded">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Exkluderade</h3>
+                <div class="value" id="countExcluded">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Totalt</h3>
+                <div class="value" id="countTotal">-</div>
+            </div>
+        </div>
+
+        <!-- Card View -->
+        <div id="cardView" class="hidden">
+            <div class="section-header">
+                <h2>Inkluderade försäljningar</h2>
+            </div>
+            <div id="includedCards" class="cards-grid"></div>
+
+            <hr class="divider">
+
+            <h3 class="section-title">Exkluderade försäljningar</h3>
+            <div id="excludedCards" class="cards-grid"></div>
+        </div>
+
+        <!-- Table View -->
+        <div id="tableView" class="hidden">
+            <div class="section-header">
+                <h2>Alla försäljningar</h2>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Källa</th>
+                            <th>Adress</th>
+                            <th>Område</th>
+                            <th>Utgångspris</th>
+                            <th>Slutpris</th>
+                            <th>Skillnad</th>
+                            <th>Såld</th>
+                            <th>Länk</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allProperties = [];
+        let includedProperties = [];
+        let excludedProperties = [];
+        let currentView = 'card';
+        const PRICE_STEP = 50000;
+        const DEFAULT_MIN_PRICE = 4000000;
+        const DEFAULT_SOLD_RANGE = '2y';
+        const SOLD_DATE_OPTIONS = ['6m', '1y', '2y', '3y', '4y', '5y'];
+        let currentSort = { field: 'soldDate', direction: 'desc' };
+        let priceBounds = { min: 0, max: 0 };
+        let sliderState = { min: 0, max: 0 };
+
+        // Load data on page load
+        window.addEventListener('DOMContentLoaded', loadData);
+
+        async function loadData() {
+            document.getElementById('loading').classList.remove('hidden');
+
+            try {
+                // Load both JSON files
+                const [booliResponse, hemnetResponse] = await Promise.all([
+                    fetch('/booli.json'),
+                    fetch('/hemnet.json')
+                ]);
+
+                if (!booliResponse.ok || !hemnetResponse.ok) {
+                    throw new Error('Kunde inte ladda data');
+                }
+
+                const booliData = await booliResponse.json();
+                const hemnetData = await hemnetResponse.json();
+
+                // Combine and normalize data
+                allProperties = [
+                    ...booliData.map(p => normalizeProperty(p, 'booli')),
+                    ...hemnetData.map(p => normalizeProperty(p, 'hemnet'))
+                ];
+
+                // Sort by sold date (newest first)
+                allProperties.sort((a, b) => new Date(b.soldDate) - new Date(a.soldDate));
+
+                console.log(`Loaded ${allProperties.length} properties (${booliData.length} from Booli, ${hemnetData.length} from Hemnet)`);
+
+                initializePriceFilter();
+                initializeDateFilter();
+                updateSortControls();
+                applyFilter();
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Kunde inte ladda data: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function normalizeProperty(property, source) {
+            // Extract area/location - handle both string and object formats
+            let area = '';
+            if (typeof property.location === 'string') {
+                area = property.location;
+            } else if (property.location && typeof property.location === 'object') {
+                // Booli format: location.region.municipalityName
+                area = property.location.region?.municipalityName || '';
+            }
+
+            // Fallback to descriptiveAreaName or area
+            if (!area) {
+                area = property.descriptiveAreaName || property.area || '';
+            }
+
+            const askingPrice = getAskingPrice(property);
+            const finalPrice = getFinalPrice(property);
+
+            return {
+                ...property,
+                source: source,
+                askingPrice,
+                finalPrice,
+                percentChange: getPercentChange(property, askingPrice, finalPrice),
+                address: property.streetAddress || property.address || 'Ingen adress',
+                area: area,
+                soldDate: property.soldDate || '',
+                id: property.id || property.booliId || `${source}-${Math.random()}`,
+                url: generateUrl(property, source)
+            };
+        }
+
+        function generateUrl(property, source) {
+            // If URL already exists in data, use it
+            if (property.url) {
+                // Make sure it's a full URL
+                if (property.url.startsWith('http')) {
+                    return property.url;
+                } else if (property.url.startsWith('/')) {
+                    // Booli URLs are relative
+                    return source === 'booli'
+                        ? `https://www.booli.se${property.url}`
+                        : `https://www.hemnet.se${property.url}`;
+                }
+            }
+
+            // Fallback: generate URL from ID
+            if (source === 'booli' && (property.id || property.booliId)) {
+                const id = property.id || property.booliId;
+                return `https://www.booli.se/annons/${id}`;
+            } else if (source === 'hemnet' && property.id) {
+                return `https://www.hemnet.se/salda/${property.id}`;
+            }
+
+            return null;
+        }
+
+        function parsePriceValue(value) {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            if (typeof value === 'number' && !Number.isNaN(value)) {
+                return value;
+            }
+
+            if (typeof value === 'string') {
+                const digits = value.replace(/[^\d]/g, '');
+                if (!digits) {
+                    return null;
+                }
+                return parseInt(digits, 10);
+            }
+
+            if (typeof value === 'object') {
+                if ('raw' in value && value.raw !== undefined) {
+                    return parsePriceValue(value.raw);
+                }
+                if ('value' in value && value.value !== undefined) {
+                    return parsePriceValue(value.value);
+                }
+                if ('formatted' in value && value.formatted !== undefined) {
+                    return parsePriceValue(value.formatted);
+                }
+            }
+
+            return null;
+        }
+
+        function getAskingPrice(property) {
+            const candidates = [
+                property.askingPrice,
+                property.listPrice,
+                property.askPrice,
+                property.price
+            ];
+
+            for (const candidate of candidates) {
+                const parsed = parsePriceValue(candidate);
+                if (parsed !== null) {
+                    return parsed;
+                }
+            }
+
+            return 0;
+        }
+
+        function getFinalPrice(property) {
+            const candidates = [
+                property.finalPrice,
+                property.soldPrice,
+                property.salePrice
+            ];
+
+            for (const candidate of candidates) {
+                const parsed = parsePriceValue(candidate);
+                if (parsed !== null) {
+                    return parsed;
+                }
+            }
+
+            return 0;
+        }
+
+        function parsePercentageValue(value) {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            if (typeof value === 'number' && !Number.isNaN(value)) {
+                return value;
+            }
+
+            if (typeof value === 'string') {
+                const normalized = value.replace('%', '').replace(',', '.').trim();
+                if (!normalized) {
+                    return null;
+                }
+                const parsed = parseFloat(normalized);
+                return Number.isNaN(parsed) ? null : parsed;
+            }
+
+            if (typeof value === 'object') {
+                if ('raw' in value && value.raw !== undefined) {
+                    return parsePercentageValue(value.raw);
+                }
+                if ('value' in value && value.value !== undefined) {
+                    return parsePercentageValue(value.value);
+                }
+                if ('formatted' in value && value.formatted !== undefined) {
+                    return parsePercentageValue(value.formatted);
+                }
+            }
+
+            return null;
+        }
+
+        function getPercentChange(property, askingPrice, finalPrice) {
+            const candidates = [
+                property.percentChange,
+                property.soldPricePercentageDiff,
+                property.percentageChange
+            ];
+
+            for (const candidate of candidates) {
+                const parsed = parsePercentageValue(candidate);
+                if (parsed !== null) {
+                    return parsed;
+                }
+            }
+
+            if (askingPrice > 0 && finalPrice > 0) {
+                return ((finalPrice - askingPrice) / askingPrice) * 100;
+            }
+
+            return 0;
+        }
+
+        function normalizeSoldRange(option) {
+            if (option === 'all') {
+                return 'all';
+            }
+
+            if (SOLD_DATE_OPTIONS.includes(option)) {
+                return option;
+            }
+
+            return DEFAULT_SOLD_RANGE;
+        }
+
+        function computeLookbackDate(option) {
+            const normalized = normalizeSoldRange(option);
+            if (normalized === 'all') {
+                return null;
+            }
+
+            const now = new Date();
+            const baseYear = now.getUTCFullYear();
+            const baseMonth = now.getUTCMonth();
+            const baseDay = now.getUTCDate();
+
+            let monthsToSubtract = 0;
+
+            if (normalized.endsWith('m')) {
+                monthsToSubtract = parseInt(normalized, 10);
+            } else if (normalized.endsWith('y')) {
+                monthsToSubtract = parseInt(normalized, 10) * 12;
+            } else {
+                return null;
+            }
+
+            if (Number.isNaN(monthsToSubtract)) {
+                return null;
+            }
+
+            const totalMonths = baseYear * 12 + baseMonth - monthsToSubtract;
+            let targetYear = Math.floor(totalMonths / 12);
+            let targetMonth = totalMonths % 12;
+
+            if (targetMonth < 0) {
+                targetMonth += 12;
+                targetYear -= 1;
+            }
+
+            const firstOfMonth = new Date(Date.UTC(targetYear, targetMonth, 1));
+            const maxDay = new Date(Date.UTC(targetYear, targetMonth + 1, 0)).getUTCDate();
+            const targetDay = Math.min(baseDay, maxDay);
+            firstOfMonth.setUTCDate(targetDay);
+
+            return firstOfMonth;
+        }
+
+        function getLookbackTimestamp(option) {
+            const date = computeLookbackDate(option);
+            return date ? date.getTime() : null;
+        }
+
+        function getDefaultSoldDateOption() {
+            return DEFAULT_SOLD_RANGE;
+        }
+
+        function initializeDateFilter() {
+            const select = document.getElementById('soldDateRange');
+            if (!select) {
+                return;
+            }
+            const defaultOption = normalizeSoldRange(getDefaultSoldDateOption());
+            select.value = defaultOption;
+        }
+
+        function toTimestamp(value) {
+            if (value === null || value === undefined) {
+                return null;
+            }
+
+            if (value instanceof Date) {
+                const time = value.getTime();
+                return Number.isNaN(time) ? null : time;
+            }
+
+            if (typeof value === 'number') {
+                return Number.isNaN(value) ? null : value;
+            }
+
+            if (typeof value === 'string') {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                    return null;
+                }
+                const parsed = Date.parse(trimmed);
+                return Number.isNaN(parsed) ? null : parsed;
+            }
+
+            return null;
+        }
+
+        function getSoldTimestamp(property) {
+            if (!property || !property.soldDate) {
+                return null;
+            }
+            return toTimestamp(property.soldDate);
+        }
+
+        function initializePriceFilter() {
+            const sliderMinEl = document.getElementById('priceSliderMin');
+            const sliderMaxEl = document.getElementById('priceSliderMax');
+            const minInputEl = document.getElementById('minPrice');
+            const maxInputEl = document.getElementById('maxPrice');
+
+            if (!sliderMinEl || !sliderMaxEl || !minInputEl || !maxInputEl) {
+                return;
+            }
+
+            const validPrices = allProperties
+                .map(p => Number(p.askingPrice))
+                .filter(price => !Number.isNaN(price) && price >= 0);
+
+            const computedMin = validPrices.length ? Math.min(...validPrices) : 0;
+            const computedMax = validPrices.length ? Math.max(...validPrices) : PRICE_STEP;
+
+            priceBounds.min = Math.max(0, Math.floor(computedMin / PRICE_STEP) * PRICE_STEP);
+            priceBounds.max = Math.ceil(computedMax / PRICE_STEP) * PRICE_STEP;
+
+            if (priceBounds.max <= priceBounds.min) {
+                priceBounds.max = priceBounds.min + PRICE_STEP;
+            }
+
+            const desiredMin = getDefaultMinPrice();
+
+            sliderState.min = desiredMin;
+            sliderState.max = priceBounds.max;
+
+            sliderMinEl.min = priceBounds.min;
+            sliderMinEl.max = priceBounds.max;
+            sliderMinEl.step = PRICE_STEP;
+            sliderMinEl.value = sliderState.min;
+
+            sliderMaxEl.min = priceBounds.min;
+            sliderMaxEl.max = priceBounds.max;
+            sliderMaxEl.step = PRICE_STEP;
+            sliderMaxEl.value = sliderState.max;
+
+            minInputEl.min = priceBounds.min;
+            minInputEl.max = priceBounds.max;
+            minInputEl.step = PRICE_STEP;
+            minInputEl.value = sliderState.min;
+
+            maxInputEl.min = priceBounds.min;
+            maxInputEl.max = priceBounds.max;
+            maxInputEl.step = PRICE_STEP;
+            maxInputEl.value = sliderState.max;
+
+            updatePriceLabels();
+            updateSliderRange();
+        }
+
+        function handleMinSliderInput(value) {
+            document.getElementById('minPrice').value = value;
+            applyFilter();
+        }
+
+        function handleMaxSliderInput(value) {
+            document.getElementById('maxPrice').value = value;
+            applyFilter();
+        }
+
+        function handleMinInputChange() {
+            applyFilter();
+        }
+
+        function handleMaxInputChange() {
+            applyFilter();
+        }
+
+        function handleDateFilterChange() {
+            applyFilter();
+        }
+
+        function updatePriceLabels() {
+            const minLabel = document.getElementById('sliderMinLabel');
+            const maxLabel = document.getElementById('sliderMaxLabel');
+
+            if (minLabel) {
+                minLabel.textContent = formatPrice(sliderState.min) + ' kr';
+            }
+
+            if (maxLabel) {
+                maxLabel.textContent = formatPrice(sliderState.max) + ' kr';
+            }
+        }
+
+        function updateSliderRange() {
+            const rangeEl = document.getElementById('sliderRange');
+            if (!rangeEl) return;
+
+            const span = priceBounds.max - priceBounds.min;
+
+            if (span <= 0) {
+                rangeEl.style.left = '0%';
+                rangeEl.style.width = '100%';
+                return;
+            }
+
+            const minPercentage = ((sliderState.min - priceBounds.min) / span) * 100;
+            const maxPercentage = ((sliderState.max - priceBounds.min) / span) * 100;
+
+            rangeEl.style.left = `${minPercentage}%`;
+            rangeEl.style.width = `${Math.max(maxPercentage - minPercentage, 0)}%`;
+        }
+
+        function snapToStep(value) {
+            return Math.round(value / PRICE_STEP) * PRICE_STEP;
+        }
+
+        function clamp(value, min, max) {
+            return Math.min(Math.max(value, min), max);
+        }
+
+        function getDefaultMinPrice() {
+            if (priceBounds.max <= priceBounds.min) {
+                return priceBounds.min;
+            }
+
+            return clamp(
+                snapToStep(Math.max(priceBounds.min, DEFAULT_MIN_PRICE)),
+                priceBounds.min,
+                priceBounds.max
+            );
+        }
+
+        function calculateMedian(values) {
+            if (!values.length) {
+                return 0;
+            }
+
+            const sorted = [...values].sort((a, b) => a - b);
+            const middleIndex = Math.floor(sorted.length / 2);
+
+            if (sorted.length % 2 === 0) {
+                return (sorted[middleIndex - 1] + sorted[middleIndex]) / 2;
+            }
+
+            return sorted[middleIndex];
+        }
+
+        function applyFilter() {
+            const minInputEl = document.getElementById('minPrice');
+            const maxInputEl = document.getElementById('maxPrice');
+            const sliderMinEl = document.getElementById('priceSliderMin');
+            const sliderMaxEl = document.getElementById('priceSliderMax');
+            const soldDateSelectEl = document.getElementById('soldDateRange');
+
+            const rawMin = parseInt(minInputEl.value, 10);
+            const rawMax = parseInt(maxInputEl.value, 10);
+
+            let minPrice = Number.isNaN(rawMin) ? priceBounds.min : rawMin;
+            let maxPrice = Number.isNaN(rawMax) ? priceBounds.max : rawMax;
+
+            minPrice = clamp(snapToStep(minPrice), priceBounds.min, priceBounds.max);
+            maxPrice = clamp(snapToStep(maxPrice), priceBounds.min, priceBounds.max);
+
+            if (minPrice > maxPrice) {
+                maxPrice = minPrice;
+            }
+
+            sliderState.min = minPrice;
+            sliderState.max = maxPrice;
+
+            minInputEl.value = sliderState.min;
+            maxInputEl.value = sliderState.max;
+
+            if (sliderMinEl && sliderMaxEl) {
+                sliderMinEl.value = sliderState.min;
+                sliderMaxEl.value = sliderState.max;
+            }
+
+            updatePriceLabels();
+            updateSliderRange();
+
+            let soldRangeOption = soldDateSelectEl ? soldDateSelectEl.value : 'all';
+            soldRangeOption = normalizeSoldRange(soldRangeOption);
+
+            if (soldDateSelectEl && soldDateSelectEl.value !== soldRangeOption) {
+                soldDateSelectEl.value = soldRangeOption;
+            }
+
+            const soldAfterTimestamp = getLookbackTimestamp(soldRangeOption);
+
+            includedProperties = [];
+            excludedProperties = [];
+
+            allProperties.forEach(property => {
+                const priceMatch = property.askingPrice >= minPrice && property.askingPrice <= maxPrice;
+                const saleTimestamp = getSoldTimestamp(property);
+                const dateMatch = !soldAfterTimestamp || (saleTimestamp !== null && saleTimestamp >= soldAfterTimestamp);
+
+                if (priceMatch && dateMatch) {
+                    includedProperties.push(property);
+                } else {
+                    excludedProperties.push(property);
+                }
+            });
+
+            sortProperties();
+            updateStats();
+            renderView();
+        }
+
+        function resetFilter() {
+            document.getElementById('minPrice').value = getDefaultMinPrice();
+            document.getElementById('maxPrice').value = priceBounds.max;
+            const soldDateSelectEl = document.getElementById('soldDateRange');
+            if (soldDateSelectEl) {
+                soldDateSelectEl.value = normalizeSoldRange(getDefaultSoldDateOption());
+            }
+            applyFilter();
+        }
+
+        function changeSortField(field) {
+            if (!field) {
+                return;
+            }
+
+            if (field !== currentSort.field) {
+                currentSort.field = field;
+                sortProperties();
+                updateSortControls();
+                renderView();
+            }
+        }
+
+        function toggleSortDirection() {
+            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            sortProperties();
+            updateSortControls();
+            renderView();
+        }
+
+        function updateSortControls() {
+            const selectEl = document.getElementById('sortField');
+            const directionBtn = document.getElementById('sortDirectionBtn');
+
+            if (selectEl) {
+                selectEl.value = currentSort.field;
+            }
+
+            if (directionBtn) {
+                directionBtn.textContent = currentSort.direction === 'asc'
+                    ? 'Stigande ↑'
+                    : 'Fallande ↓';
+            }
+        }
+
+        function sortProperties() {
+            const comparator = createComparator(currentSort.field, currentSort.direction);
+            includedProperties = [...includedProperties].sort(comparator);
+            excludedProperties = [...excludedProperties].sort(comparator);
+        }
+
+        function createComparator(field, direction) {
+            const multiplier = direction === 'asc' ? 1 : -1;
+
+            return (a, b) => {
+                const valueA = getSortValue(a, field);
+                const valueB = getSortValue(b, field);
+
+                if (valueA === valueB) {
+                    return 0;
+                }
+
+                if (valueA === null || valueA === undefined) {
+                    return 1;
+                }
+
+                if (valueB === null || valueB === undefined) {
+                    return -1;
+                }
+
+                if (valueA < valueB) {
+                    return -1 * multiplier;
+                }
+
+                if (valueA > valueB) {
+                    return 1 * multiplier;
+                }
+
+                return 0;
+            };
+        }
+
+        function getSortValue(property, field) {
+            switch (field) {
+                case 'askingPrice':
+                    {
+                        const value = Number(property.askingPrice);
+                        return Number.isNaN(value) ? null : value;
+                    }
+                case 'finalPrice':
+                    {
+                        const value = Number(property.finalPrice);
+                        return Number.isNaN(value) ? null : value;
+                    }
+                case 'percentChange':
+                    {
+                        const value = Number(property.percentChange);
+                        return Number.isNaN(value) ? null : value;
+                    }
+                case 'soldDate':
+                default:
+                    return getSoldTimestamp(property);
+            }
+        }
+
+        function updateStats() {
+            // Calculate average for included properties
+            const percentages = includedProperties
+                .map(p => p.percentChange)
+                .filter(p => !isNaN(p) && p !== null);
+
+            const average = percentages.length > 0
+                ? percentages.reduce((sum, val) => sum + val, 0) / percentages.length
+                : 0;
+
+            const median = calculateMedian(percentages);
+
+            document.getElementById('avgIncluded').textContent = average.toFixed(2) + '%';
+            document.getElementById('medianIncluded').textContent = median.toFixed(2) + '%';
+            document.getElementById('countIncluded').textContent = includedProperties.length;
+            document.getElementById('countExcluded').textContent = excludedProperties.length;
+            document.getElementById('countTotal').textContent = allProperties.length;
+
+            document.getElementById('statsSection').classList.remove('hidden');
+        }
+
+        function renderView() {
+            if (currentView === 'card') {
+                renderCardView();
+            } else {
+                renderTableView();
+            }
+        }
+
+        function showCardView() {
+            currentView = 'card';
+            document.getElementById('cardView').classList.remove('hidden');
+            document.getElementById('tableView').classList.add('hidden');
+            document.getElementById('cardViewBtn').classList.add('active');
+            document.getElementById('cardViewBtn').classList.remove('secondary');
+            document.getElementById('tableViewBtn').classList.remove('active');
+            document.getElementById('tableViewBtn').classList.add('secondary');
+            renderCardView();
+        }
+
+        function showTableView() {
+            currentView = 'table';
+            document.getElementById('tableView').classList.remove('hidden');
+            document.getElementById('cardView').classList.add('hidden');
+            document.getElementById('tableViewBtn').classList.add('active');
+            document.getElementById('tableViewBtn').classList.remove('secondary');
+            document.getElementById('cardViewBtn').classList.remove('active');
+            document.getElementById('cardViewBtn').classList.add('secondary');
+            renderTableView();
+        }
+
+        function renderCardView() {
+            const includedGrid = document.getElementById('includedCards');
+            const excludedGrid = document.getElementById('excludedCards');
+
+            includedGrid.innerHTML = '';
+            excludedGrid.innerHTML = '';
+
+            // Render included properties
+            includedProperties.forEach(property => {
+                includedGrid.appendChild(createPropertyCard(property, false));
+            });
+
+            // Render excluded properties
+            excludedProperties.forEach(property => {
+                excludedGrid.appendChild(createPropertyCard(property, true));
+            });
+
+            document.getElementById('cardView').classList.remove('hidden');
+        }
+
+        function createPropertyCard(property, isExcluded) {
+            const card = document.createElement('div');
+            card.className = 'property-card' + (isExcluded ? ' excluded' : '');
+
+            const percentage = property.percentChange || 0;
+            const percentageClass = percentage >= 0 ? 'positive' : 'negative';
+
+            card.innerHTML = `
+                <span class="source-badge ${property.source}">${property.source}</span>
+                <h3>${property.address}</h3>
+                <div class="property-info">${property.area}</div>
+                <div class="property-info">Utgångspris: ${formatPrice(property.askingPrice)} kr</div>
+                <div class="property-info">Slutpris: ${formatPrice(property.finalPrice)} kr</div>
+                <div class="property-info">Såld: ${formatDate(property.soldDate)}</div>
+                <div class="percentage ${percentageClass}">
+                    ${percentage >= 0 ? '+' : ''}${percentage.toFixed(1)}%
+                </div>
+                ${property.url ? `<div style="margin-top: 10px;"><a href="${property.url}" target="_blank" class="link-button">Visa annons →</a></div>` : ''}
+            `;
+
+            return card;
+        }
+
+        function renderTableView() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            // Render included first, then excluded
+            const sortedProperties = [...includedProperties, ...excludedProperties];
+
+            sortedProperties.forEach(property => {
+                const isExcluded = excludedProperties.includes(property);
+                const row = document.createElement('tr');
+                row.className = isExcluded ? 'excluded' : '';
+
+                const percentage = property.percentChange || 0;
+
+                row.innerHTML = `
+                    <td><span class="source-badge ${property.source}">${property.source}</span></td>
+                    <td>${property.address}</td>
+                    <td>${property.area}</td>
+                    <td>${formatPrice(property.askingPrice)} kr</td>
+                    <td>${formatPrice(property.finalPrice)} kr</td>
+                    <td style="color: ${percentage >= 0 ? '#155724' : '#721c24'}; font-weight: 600;">
+                        ${percentage >= 0 ? '+' : ''}${percentage.toFixed(1)}%
+                    </td>
+                    <td>${formatDate(property.soldDate)}</td>
+                    <td>
+                        ${property.url ? `<a href="${property.url}" target="_blank" class="link-button">Visa →</a>` : '-'}
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('tableView').classList.remove('hidden');
+        }
+
+        function formatPrice(price) {
+            if (price === null || price === undefined) return 'N/A';
+            const numericPrice = Number(price);
+            if (Number.isNaN(numericPrice)) return 'N/A';
+            return Math.round(numericPrice).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return 'N/A';
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return dateStr;
+            return date.toLocaleDateString('sv-SE');
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+
+            setTimeout(() => {
+                errorEl.classList.add('hidden');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

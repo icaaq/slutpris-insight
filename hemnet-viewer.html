@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hemnet Data Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button.secondary {
+            background: #6c757d;
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .stats-card h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .stats-card .value {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stats-card .count {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .property-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .property-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .property-card h3 {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .property-info {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .percentage {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        .percentage.positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .percentage.negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #2196F3;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #0d47a1;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #1565c0;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+
+        .instructions code {
+            background: #fff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hemnet Data Viewer</h1>
+
+        <div class="instructions">
+            <h3>Så här använder du verktyget:</h3>
+            <ol>
+                <li>Klicka på <strong>"Ladda från fil"</strong> för att läsa sparad data från <code>hemnet-data.json</code></li>
+                <li><strong>ELLER</strong> hämta ny data från Hemnet:</li>
+                <ul style="margin-left: 20px; margin-top: 5px;">
+                    <li>Gå till <strong>Hemnet.se/salda/bostader</strong> med dina sökfilter</li>
+                    <li>Öppna DevTools (<code>Cmd+Option+I</code>), kör <code>hemnet-scraper.js</code></li>
+                    <li>Kör: <code>copy(JSON.stringify(window.hemnetData, null, 2))</code></li>
+                    <li>Klistra in i textrutan nedan och klicka "Ladda & Spara data"</li>
+                </ul>
+            </ol>
+        </div>
+
+        <div class="input-section">
+            <label for="jsonInput">Klistra in JSON-data från Hemnet-scriptet:</label>
+            <textarea id="jsonInput" placeholder='[
+  {
+    "streetAddress": "Bogghedsvägen 13",
+    "location": "Östnor, Mora kommun",
+    "askingPrice": 3658537,
+    "finalPrice": 3000000,
+    "percentChange": -18,
+    ...
+  }
+]'></textarea>
+            <div class="button-group">
+                <button onclick="loadAndSaveData()">Ladda & Spara data</button>
+                <button onclick="loadFromFile()">Ladda från fil</button>
+                <button class="secondary" onclick="clearData()">Rensa</button>
+                <button class="secondary" onclick="loadSampleData()">Ladda testdata</button>
+            </div>
+        </div>
+
+        <div id="error" class="error hidden"></div>
+        <div id="success" class="success hidden"></div>
+
+        <div id="filterSection" class="filter-section hidden">
+            <h3 style="margin-bottom: 15px;">Filtrera data</h3>
+            <div class="filter-group">
+                <div>
+                    <label for="minPrice">Min utgångspris (kr)</label>
+                    <input type="number" id="minPrice" value="0" min="0" step="100000" placeholder="0">
+                </div>
+                <div>
+                    <label for="maxPrice">Max utgångspris (kr)</label>
+                    <input type="number" id="maxPrice" value="999999999" min="0" step="100000" placeholder="Obegränsat">
+                </div>
+            </div>
+            <div class="button-group" style="margin-top: 15px;">
+                <button onclick="applyFilters()">Applicera filter</button>
+                <button class="secondary" onclick="resetFilters()">Återställ</button>
+            </div>
+        </div>
+
+        <div id="results" class="hidden">
+            <div class="stats-card">
+                <h2>Genomsnittlig Skillnad (Sålt pris vs Utgångspris)</h2>
+                <div class="value" id="avgPercentage">-</div>
+                <div class="count" id="propertyCount">-</div>
+            </div>
+
+            <h2 style="margin-bottom: 15px; color: #333;">Fastigheter</h2>
+            <div id="propertiesGrid" class="properties-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        let allProperties = [];
+        let filteredProperties = [];
+
+        // Load data from hemnet-data.json file
+        async function loadFromFile() {
+            try {
+                const response = await fetch('/hemnet-data.json');
+
+                if (!response.ok) {
+                    throw new Error('Kunde inte läsa filen. Kontrollera att servern körs.');
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Filen innehåller inte giltig data');
+                }
+
+                if (data.length === 0) {
+                    showError('Filen är tom. Lägg till data från Hemnet först.');
+                    return;
+                }
+
+                allProperties = data;
+                filteredProperties = [...allProperties];
+
+                showSuccess(`✅ ${allProperties.length} fastigheter laddade från fil!`);
+                document.getElementById('filterSection').classList.remove('hidden');
+                displayResults();
+
+            } catch (error) {
+                showError('Fel vid läsning av fil: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Load data from textarea and save to server
+        async function loadAndSaveData() {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+
+            if (!jsonInput) {
+                showError('Vänligen klistra in JSON-data först');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(jsonInput);
+
+                if (!Array.isArray(data)) {
+                    showError('Data måste vara en array av fastigheter');
+                    return;
+                }
+
+                if (data.length === 0) {
+                    showError('Inga fastigheter hittades i datan');
+                    return;
+                }
+
+                // Save to server
+                const response = await fetch('/api/hemnet-save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Kunde inte spara till servern');
+                }
+
+                allProperties = data;
+                filteredProperties = [...allProperties];
+
+                showSuccess(`✅ ${allProperties.length} fastigheter laddade och sparade!`);
+                document.getElementById('filterSection').classList.remove('hidden');
+                displayResults();
+
+                // Clear textarea after successful save
+                document.getElementById('jsonInput').value = '';
+
+            } catch (error) {
+                showError('Fel: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        function loadData() {
+            const jsonInput = document.getElementById('jsonInput').value.trim();
+
+            if (!jsonInput) {
+                showError('Vänligen klistra in JSON-data först');
+                return;
+            }
+
+            try {
+                const data = JSON.parse(jsonInput);
+
+                if (!Array.isArray(data)) {
+                    showError('Data måste vara en array av fastigheter');
+                    return;
+                }
+
+                if (data.length === 0) {
+                    showError('Inga fastigheter hittades i datan');
+                    return;
+                }
+
+                allProperties = data;
+                filteredProperties = [...allProperties];
+
+                showSuccess(`✅ ${allProperties.length} fastigheter laddade!`);
+                document.getElementById('filterSection').classList.remove('hidden');
+
+                displayResults();
+
+            } catch (error) {
+                showError('Ogiltigt JSON-format: ' + error.message);
+            }
+        }
+
+        function applyFilters() {
+            const minPrice = parseInt(document.getElementById('minPrice').value) || 0;
+            const maxPrice = parseInt(document.getElementById('maxPrice').value) || 999999999;
+
+            filteredProperties = allProperties.filter(prop => {
+                const askingPrice = prop.askingPrice || 0;
+                return askingPrice >= minPrice && askingPrice <= maxPrice;
+            });
+
+            if (filteredProperties.length === 0) {
+                showError('Inga fastigheter matchar filtret');
+                document.getElementById('results').classList.add('hidden');
+                return;
+            }
+
+            showSuccess(`Visar ${filteredProperties.length} av ${allProperties.length} fastigheter`);
+            displayResults();
+        }
+
+        function resetFilters() {
+            document.getElementById('minPrice').value = '0';
+            document.getElementById('maxPrice').value = '999999999';
+            filteredProperties = [...allProperties];
+            displayResults();
+            showSuccess('Filter återställda');
+        }
+
+        function displayResults() {
+            // Calculate average
+            const percentages = filteredProperties
+                .map(p => p.percentChange)
+                .filter(p => !isNaN(p) && p !== null && p !== undefined);
+
+            if (percentages.length === 0) {
+                showError('Inga fastigheter med procentdata hittades');
+                return;
+            }
+
+            const average = percentages.reduce((sum, val) => sum + val, 0) / percentages.length;
+
+            // Update stats
+            document.getElementById('avgPercentage').textContent = average.toFixed(2) + '%';
+            document.getElementById('propertyCount').textContent = `Baserat på ${filteredProperties.length} fastigheter`;
+
+            // Display properties
+            const grid = document.getElementById('propertiesGrid');
+            grid.innerHTML = '';
+
+            filteredProperties.forEach(property => {
+                const card = document.createElement('div');
+                card.className = 'property-card';
+
+                const percentage = property.percentChange || 0;
+                const percentageClass = percentage >= 0 ? 'positive' : 'negative';
+
+                card.innerHTML = `
+                    <h3>${property.streetAddress || 'Ingen adress'}</h3>
+                    <div class="property-info">${property.location || 'Inget område'}</div>
+                    <div class="property-info">${property.rooms || ''} ${property.livingArea || ''}</div>
+                    ${property.plotArea ? `<div class="property-info">Tomt: ${property.plotArea}</div>` : ''}
+                    <div class="property-info">Utgångspris: ${formatPrice(property.askingPrice)} kr</div>
+                    <div class="property-info">Slutpris: ${formatPrice(property.finalPrice)} kr</div>
+                    <div class="property-info">Såld: ${property.soldDate || 'Ej angivet'}</div>
+                    ${property.broker ? `<div class="property-info" style="font-size: 12px; margin-top: 10px; opacity: 0.7;">${property.broker}</div>` : ''}
+                    <div class="percentage ${percentageClass}">
+                        ${percentage >= 0 ? '+' : ''}${percentage.toFixed(1)}%
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            document.getElementById('results').classList.remove('hidden');
+        }
+
+        function formatPrice(price) {
+            if (!price) return 'N/A';
+            return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.classList.remove('hidden');
+            document.getElementById('success').classList.add('hidden');
+
+            setTimeout(() => {
+                errorEl.classList.add('hidden');
+            }, 5000);
+        }
+
+        function showSuccess(message) {
+            const successEl = document.getElementById('success');
+            successEl.textContent = message;
+            successEl.classList.remove('hidden');
+            document.getElementById('error').classList.add('hidden');
+
+            setTimeout(() => {
+                successEl.classList.add('hidden');
+            }, 3000);
+        }
+
+        function clearData() {
+            document.getElementById('jsonInput').value = '';
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('filterSection').classList.add('hidden');
+            document.getElementById('error').classList.add('hidden');
+            document.getElementById('success').classList.add('hidden');
+            allProperties = [];
+            filteredProperties = [];
+        }
+
+        function loadSampleData() {
+            const sampleData = [
+                {
+                    "streetAddress": "Bogghedsvägen 13",
+                    "location": "Östnor, Mora kommun",
+                    "askingPrice": 3658537,
+                    "finalPrice": 3000000,
+                    "percentChange": -18,
+                    "rooms": "5 rum",
+                    "livingArea": "170 m²",
+                    "plotArea": "2 952 m²",
+                    "soldDate": "18 okt. 2025",
+                    "broker": "Eric Thors Fastighetsbyrå AB"
+                },
+                {
+                    "streetAddress": "Testvägen 1",
+                    "location": "Stockholm",
+                    "askingPrice": 5000000,
+                    "finalPrice": 5500000,
+                    "percentChange": 10,
+                    "rooms": "3 rum",
+                    "livingArea": "85 m²",
+                    "plotArea": "500 m²",
+                    "soldDate": "15 okt. 2025",
+                    "broker": "Test Mäklare AB"
+                },
+                {
+                    "streetAddress": "Exempelgatan 42",
+                    "location": "Göteborg",
+                    "askingPrice": 4200000,
+                    "finalPrice": 4000000,
+                    "percentChange": -4.8,
+                    "rooms": "4 rum",
+                    "livingArea": "120 m²",
+                    "plotArea": "800 m²",
+                    "soldDate": "10 okt. 2025",
+                    "broker": "Exempel Fastigheter"
+                }
+            ];
+
+            document.getElementById('jsonInput').value = JSON.stringify(sampleData, null, 2);
+            showSuccess('Testdata inlagd! Klicka på "Ladda data" för att visa.');
+        }
+    </script>
+</body>
+</html>
