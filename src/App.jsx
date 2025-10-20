@@ -611,13 +611,13 @@ function TableView({ included, excluded }) {
       <Table size="medium">
         <TableHead>
           <TableRow>
-            <TableCell>Källa</TableCell>
+            <TableCell align="right">Skillnad</TableCell>
             <TableCell>Adress</TableCell>
             <TableCell>Område</TableCell>
             <TableCell align="right">Utgångspris</TableCell>
             <TableCell align="right">Slutpris</TableCell>
-            <TableCell align="right">Skillnad</TableCell>
             <TableCell align="right">Såld</TableCell>
+            <TableCell>Källa</TableCell>
             <TableCell>Länk</TableCell>
           </TableRow>
         </TableHead>
@@ -633,6 +633,27 @@ function TableView({ included, excluded }) {
                   opacity: includedRow ? 1 : 0.55,
                 }}
               >
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontWeight: 600,
+                    color: percentage >= 0 ? "success.main" : "error.main",
+                  }}
+                >
+                  {percentage >= 0 ? "+" : ""}
+                  {percentage.toFixed(1)}%
+                </TableCell>
+                <TableCell>{property.address}</TableCell>
+                <TableCell>{property.area}</TableCell>
+                <TableCell align="right">
+                  {formatPrice(property.askingPrice)} kr
+                </TableCell>
+                <TableCell align="right">
+                  {formatPrice(property.finalPrice)} kr
+                </TableCell>
+                <TableCell align="right">
+                  {formatDate(property.soldDate)}
+                </TableCell>
                 <TableCell>
                   <Chip
                     label={property.source}
@@ -655,27 +676,6 @@ function TableView({ included, excluded }) {
                           : "rgba(17, 24, 39, 0.35)",
                     }}
                   />
-                </TableCell>
-                <TableCell>{property.address}</TableCell>
-                <TableCell>{property.area}</TableCell>
-                <TableCell align="right">
-                  {formatPrice(property.askingPrice)} kr
-                </TableCell>
-                <TableCell align="right">
-                  {formatPrice(property.finalPrice)} kr
-                </TableCell>
-                <TableCell
-                  align="right"
-                  sx={{
-                    fontWeight: 600,
-                    color: percentage >= 0 ? "success.main" : "error.main",
-                  }}
-                >
-                  {percentage >= 0 ? "+" : ""}
-                  {percentage.toFixed(1)}%
-                </TableCell>
-                <TableCell align="right">
-                  {formatDate(property.soldDate)}
                 </TableCell>
                 <TableCell>
                   {property.url ? (
