@@ -74,9 +74,12 @@ function App() {
       setError(null);
 
       try {
+        const basePath = import.meta.env.BASE_URL || "/";
+        const buildUrl = (file) => `${basePath}data/${file}`;
+
         const [booliResponse, hemnetResponse] = await Promise.all([
-          fetch("/data/booli.json"),
-          fetch("/data/hemnet.json"),
+          fetch(buildUrl("booli.json")),
+          fetch(buildUrl("hemnet.json")),
         ]);
 
         if (!booliResponse.ok || !hemnetResponse.ok) {
