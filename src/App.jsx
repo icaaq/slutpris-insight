@@ -29,7 +29,7 @@ import {
 } from "@mui/material";
 
 const PRICE_STEP = 50000;
-const DEFAULT_MIN_PRICE = 4000000;
+const DEFAULT_MIN_PRICE = 4450000;
 const DEFAULT_SOLD_RANGE = "2y";
 
 const SOLD_DATE_OPTIONS = [
@@ -63,7 +63,6 @@ function App() {
   const [soldDateRange, setSoldDateRange] = useState(DEFAULT_SOLD_RANGE);
   const [sortField, setSortField] = useState("soldDate");
   const [viewMode, setViewMode] = useState("table");
-  const [sourceFilter, setSourceFilter] = useState("all");
   const [isSliding, setIsSliding] = useState(false);
   const sliderTimeoutRef = useRef(null);
 
@@ -159,13 +158,6 @@ function App() {
     const excluded = [];
 
     allProperties.forEach((property) => {
-      const matchesSource =
-        sourceFilter === "all" || property.source === sourceFilter;
-
-      if (!matchesSource) {
-        return;
-      }
-
       const priceMatch =
         property.askingPrice >= minPrice && property.askingPrice <= maxPrice;
       const saleTimestamp = getSoldTimestamp(property);
@@ -187,7 +179,6 @@ function App() {
     priceBounds.max,
     appliedPriceRange,
     soldAfterTimestamp,
-    sourceFilter,
   ]);
 
   const sortedIncluded = useMemo(
@@ -249,12 +240,6 @@ function App() {
     setSoldDateRange(event.target.value);
   };
 
-  const handleSourceFilterChange = (_, value) => {
-    if (value) {
-      setSourceFilter(value);
-    }
-  };
-
   const handleViewModeChange = (_, value) => {
     if (value) {
       setViewMode(value);
@@ -271,7 +256,6 @@ function App() {
       sliderTimeoutRef.current = null;
     }
     setSoldDateRange(DEFAULT_SOLD_RANGE);
-    setSourceFilter("all");
   };
 
   useEffect(() => {
@@ -375,25 +359,6 @@ function App() {
                 ))}
               </Select>
             </FormControl>
-            <Stack spacing={1} mt={2}>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: 0.6 }}
-              >
-                Källor
-              </Typography>
-              <ToggleButtonGroup
-                value={sourceFilter}
-                exclusive
-                onChange={handleSourceFilterChange}
-                size="small"
-              >
-                <ToggleButton value="all">Alla</ToggleButton>
-                <ToggleButton value="hemnet">Hemnet</ToggleButton>
-                <ToggleButton value="booli">Booli</ToggleButton>
-              </ToggleButtonGroup>
-            </Stack>
             <Button
               variant="outlined"
               onClick={handleResetFilters}
