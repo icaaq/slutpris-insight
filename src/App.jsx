@@ -62,7 +62,7 @@ function App() {
   const [appliedPriceRange, setAppliedPriceRange] = useState([0, 0]);
   const [soldDateRange, setSoldDateRange] = useState(DEFAULT_SOLD_RANGE);
   const [sortField, setSortField] = useState("soldDate");
-  const [viewMode, setViewMode] = useState("card");
+  const [viewMode, setViewMode] = useState("table");
   const [isSliding, setIsSliding] = useState(false);
   const sliderTimeoutRef = useRef(null);
 
@@ -387,14 +387,14 @@ function App() {
           <Grid container spacing={2} mb={3}>
             <Grid item xs={12} md={4}>
               <StatCard
-                title="Genomsnitt (inkluderade)"
+                title="Genomsnitt"
                 value={`${stats.average.toFixed(2)}%`}
                 emphasis
               />
             </Grid>
             <Grid item xs={12} md={4}>
               <StatCard
-                title="Median (inkluderade)"
+                title="Median"
                 value={`${stats.median.toFixed(2)}%`}
                 emphasis
               />
