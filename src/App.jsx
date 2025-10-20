@@ -29,7 +29,7 @@ import {
 } from "@mui/material";
 
 const PRICE_STEP = 50000;
-const DEFAULT_MIN_PRICE = 4450000;
+const DEFAULT_MIN_PRICE = 3500000;
 const DEFAULT_SOLD_RANGE = "2y";
 
 const SOLD_DATE_OPTIONS = [
@@ -77,28 +77,19 @@ function App() {
         const basePath = import.meta.env.BASE_URL || "/";
         const buildUrl = (file) => `${basePath}data/${file}`;
 
-        const [booliResponse, hemnetResponse] = await Promise.all([
-          fetch(buildUrl("booli.json")),
-          fetch(buildUrl("hemnet.json")),
-        ]);
+        const hemnetResponse = await fetch(buildUrl("hemnet.json"));
 
-        if (!booliResponse.ok || !hemnetResponse.ok) {
+        if (!hemnetResponse.ok) {
           throw new Error("Kunde inte ladda data");
         }
 
-        const [booliData, hemnetData] = await Promise.all([
-          booliResponse.json(),
-          hemnetResponse.json(),
-        ]);
+        const hemnetData = await hemnetResponse.json();
 
-        const normalizedBooli = booliData.map((property) =>
-          normalizeProperty(property, "booli")
-        );
         const normalizedHemnet = hemnetData.map((property) =>
           normalizeProperty(property, "hemnet")
         );
 
-        const combined = [...normalizedBooli, ...normalizedHemnet].sort(
+        const combined = [...normalizedHemnet].sort(
           (a, b) => (getSoldTimestamp(b) ?? 0) - (getSoldTimestamp(a) ?? 0)
         );
 
@@ -630,8 +621,7 @@ function TableView({ included, excluded }) {
             <TableCell align="right">Utgångspris</TableCell>
             <TableCell align="right">Slutpris</TableCell>
             <TableCell align="right">Såld</TableCell>
-            <TableCell>Källa</TableCell>
-            <TableCell>Länk</TableCell>
+            <TableCell>Länkar</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -680,9 +670,6 @@ function TableView({ included, excluded }) {
                   {formatDate(property.soldDate)}
                 </TableCell>
                 <TableCell>
-                  <SourceChipGroup property={property} size="small" />
-                </TableCell>
-                <TableCell>
                   {linkEntries.length ? (
                     <Stack
                       direction="column"
@@ -703,11 +690,11 @@ function TableView({ included, excluded }) {
                             color: "secondary.main",
                             "&:hover": {
                               color: "secondary.dark",
-                            textDecoration: "underline",
-                          },
-                        }}
+                              textDecoration: "underline",
+                            },
+                          }}
                         >
-                          Visa {entry.label} →
+                          {entry.label}
                         </Button>
                       ))}
                     </Stack>
