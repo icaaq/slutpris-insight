@@ -499,6 +499,8 @@ function CardView({ included, excluded }) {
 function PropertyCard({ property, muted = false }) {
   const percentage = Number(property.percentChange) || 0;
   const percentageColor = percentage >= 0 ? "success" : "error";
+  const linkEntries = getLinkEntries(property);
+  const isMatched = Boolean(property.matchedGroupId);
 
   return (
     <Card
@@ -518,33 +520,22 @@ function PropertyCard({ property, muted = false }) {
           justifyContent="space-between"
           alignItems="flex-start"
           mb={1}
+          gap={1.5}
         >
           <Typography variant="subtitle1" fontWeight={600} sx={{ pr: 1 }}>
             {property.address}
           </Typography>
-          <Chip
-            size="small"
-            label={property.source}
-            sx={{
-              textTransform: "capitalize",
-              fontWeight: 600,
-              letterSpacing: 0.6,
-              bgcolor:
-                property.source === "hemnet"
-                  ? "rgba(22, 163, 74, 0.16)"
-                  : "rgba(17, 24, 39, 0.12)",
-              color:
-                property.source === "hemnet"
-                  ? "rgba(22, 101, 52, 0.95)"
-                  : "#111827",
-              border: "1px solid",
-              borderColor:
-                property.source === "hemnet"
-                  ? "rgba(22, 163, 74, 0.4)"
-                  : "rgba(17, 24, 39, 0.35)",
-            }}
-          />
+          <SourceChipGroup property={property} />
         </Box>
+        {isMatched && (
+          <Typography
+            variant="caption"
+            color="secondary.main"
+            sx={{ fontWeight: 600, mb: 1, display: "inline-block" }}
+          >
+            {formatMatchLabel(property)}
+          </Typography>
+        )}
         <Typography variant="body2" color="text.secondary" gutterBottom>
           {property.area}
         </Typography>
@@ -571,26 +562,31 @@ function PropertyCard({ property, muted = false }) {
             color={percentageColor}
             sx={{ fontWeight: 600 }}
           />
-          {property.url && (
-            <Button
-              component="a"
-              href={property.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              size="small"
-              variant="text"
-              sx={{
-                textTransform: "none",
-                fontWeight: 600,
-                color: "secondary.main",
-                "&:hover": {
-                  color: "secondary.dark",
-                  textDecoration: "underline",
-                },
-              }}
-            >
-              Visa annons →
-            </Button>
+          {linkEntries.length > 0 && (
+            <Stack direction="row" gap={1} justifyContent="flex-end" flexWrap="wrap">
+              {linkEntries.map((entry) => (
+                <Button
+                  key={`${entry.source}-${entry.href}`}
+                  component="a"
+                  href={entry.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="small"
+                  variant="text"
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    color: "secondary.main",
+                    "&:hover": {
+                      color: "secondary.dark",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Visa {entry.label} →
+                </Button>
+              ))}
+            </Stack>
           )}
         </Box>
       </CardContent>
@@ -624,6 +620,7 @@ function TableView({ included, excluded }) {
           {rows.map((property) => {
             const includedRow = includedIds.has(property.id);
             const percentage = Number(property.percentChange) || 0;
+            const linkEntries = getLinkEntries(property);
 
             return (
               <TableRow
@@ -654,48 +651,37 @@ function TableView({ included, excluded }) {
                   {formatDate(property.soldDate)}
                 </TableCell>
                 <TableCell>
-                  <Chip
-                    label={property.source}
-                    size="small"
-                    sx={{
-                      textTransform: "capitalize",
-                      fontWeight: 600,
-                      bgcolor:
-                        property.source === "hemnet"
-                          ? "rgba(22, 163, 74, 0.16)"
-                          : "rgba(17, 24, 39, 0.12)",
-                      color:
-                        property.source === "hemnet"
-                          ? "rgba(22, 101, 52, 0.95)"
-                          : "#111827",
-                      border: "1px solid",
-                      borderColor:
-                        property.source === "hemnet"
-                          ? "rgba(22, 163, 74, 0.4)"
-                          : "rgba(17, 24, 39, 0.35)",
-                    }}
-                  />
+                  <SourceChipGroup property={property} size="small" />
                 </TableCell>
                 <TableCell>
-                  {property.url ? (
-                    <Button
-                      component="a"
-                      href={property.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      size="small"
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: 600,
-                        color: "secondary.main",
-                        "&:hover": {
-                          color: "secondary.dark",
-                          textDecoration: "underline",
-                        },
-                      }}
+                  {linkEntries.length ? (
+                    <Stack
+                      direction="column"
+                      spacing={0.5}
+                      alignItems="flex-start"
                     >
-                      Visa annons →
-                    </Button>
+                      {linkEntries.map((entry) => (
+                        <Button
+                          key={`${entry.source}-${entry.href}`}
+                          component="a"
+                          href={entry.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          size="small"
+                          sx={{
+                            textTransform: "none",
+                            fontWeight: 600,
+                            color: "secondary.main",
+                            "&:hover": {
+                              color: "secondary.dark",
+                              textDecoration: "underline",
+                            },
+                          }}
+                        >
+                          {entry.label}
+                        </Button>
+                      ))}
+                    </Stack>
                   ) : (
                     <Typography variant="body2" color="text.disabled">
                       -
@@ -792,6 +778,147 @@ function EmptyState({ message }) {
       </Typography>
     </Paper>
   );
+}
+
+function SourceChipGroup({ property, size = "small" }) {
+  const entries = getSourceEntries(property);
+
+  if (!entries.length) {
+    return null;
+  }
+
+  return (
+    <Stack direction="row" spacing={0.5} flexWrap="wrap">
+      {entries.map((entry, index) => {
+        const styles = getSourceChipStyle(entry.source);
+        const key = `${entry.source}-${entry.id || index}`;
+
+        return (
+          <Chip
+            key={key}
+            size={size}
+            label={styles.label}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              bgcolor: styles.bgcolor,
+              color: styles.color,
+              border: "1px solid",
+              borderColor: styles.borderColor,
+            }}
+          />
+        );
+      })}
+    </Stack>
+  );
+}
+
+function getSourceEntries(property) {
+  if (property?.matchedEntries) {
+    const combined = [
+      ...(property.matchedEntries.booli || []),
+      ...(property.matchedEntries.hemnet || []),
+    ];
+
+    if (!combined.length) {
+      return property.source ? [{ source: property.source, id: property.id }] : [];
+    }
+
+    return combined.map((entry) => ({
+      source: entry.source,
+      id: entry.id,
+    }));
+  }
+
+  return property.source ? [{ source: property.source, id: property.id }] : [];
+}
+
+function getSourceChipStyle(source) {
+  if (source === "hemnet") {
+    return {
+      label: "Hemnet",
+      bgcolor: "rgba(22, 163, 74, 0.16)",
+      color: "rgba(22, 101, 52, 0.95)",
+      borderColor: "rgba(22, 163, 74, 0.35)",
+    };
+  }
+
+  if (source === "booli") {
+    return {
+      label: "Booli",
+      bgcolor: "rgba(17, 24, 39, 0.12)",
+      color: "#111827",
+      borderColor: "rgba(17, 24, 39, 0.35)",
+    };
+  }
+
+  return {
+    label: "Matchad",
+    bgcolor: "rgba(79, 70, 229, 0.12)",
+    color: "rgba(67, 56, 202, 0.95)",
+    borderColor: "rgba(79, 70, 229, 0.35)",
+  };
+}
+
+function getLinkEntries(property) {
+  const entries = [];
+
+  if (property?.matchedEntries) {
+    const collections = [
+      { list: property.matchedEntries.booli, label: "Booli" },
+      { list: property.matchedEntries.hemnet, label: "Hemnet" },
+    ];
+
+    collections.forEach(({ list, label }) => {
+      list?.forEach((entry) => {
+        if (entry.url) {
+          entries.push({ source: entry.source, href: entry.url, label });
+        }
+      });
+    });
+  }
+
+  if (entries.length === 0 && property.url) {
+    entries.push({
+      source: property.source || "kombinerad",
+      href: property.url,
+      label: "annons",
+    });
+  }
+
+  const seen = new Set();
+  return entries.filter((entry) => {
+    const key = `${entry.source}-${entry.href}`;
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function formatMatchLabel(property) {
+  if (!property?.matchedEntries) {
+    return "Matchning av flera källor";
+  }
+
+  const sources = [];
+  if (property.matchedEntries.booli?.length) {
+    sources.push("Booli");
+  }
+  if (property.matchedEntries.hemnet?.length) {
+    sources.push("Hemnet");
+  }
+
+  if (!sources.length) {
+    return "Matchning av flera källor";
+  }
+
+  if (sources.length === 1) {
+    return `Matchning med ${sources[0]}`;
+  }
+
+  return `Matchning mellan ${sources.join(" & ")}`;
 }
 
 function normalizeProperty(property, source) {
@@ -1153,6 +1280,189 @@ function clamp(value, min, max) {
 
 function snapToStep(value, step) {
   return Math.round(value / step) * step;
+}
+
+function mergeSources({ booli, hemnet }) {
+  const normalizedBooli = booli.map((property) =>
+    normalizeProperty(property, "booli")
+  );
+  const normalizedHemnet = hemnet.map((property) =>
+    normalizeProperty(property, "hemnet")
+  );
+
+  const hemnetByAddress = buildEntriesByAddress(normalizedHemnet);
+  const matchedBooliIds = new Set();
+  const matchedHemnetIds = new Set();
+  const groups = [];
+
+  normalizedBooli.forEach((booliEntry) => {
+    const addressKey = normalizeAddress(booliEntry.address);
+    if (!addressKey) {
+      return;
+    }
+
+    const candidates = hemnetByAddress.get(addressKey);
+    if (!candidates || !candidates.length) {
+      return;
+    }
+
+    let bestCandidate = null;
+    let bestScore = null;
+
+    candidates.forEach((candidate) => {
+      if (matchedHemnetIds.has(candidate.id)) {
+        return;
+      }
+      const score = evaluateMatch(booliEntry, candidate);
+      if (!score) {
+        return;
+      }
+      if (!bestScore || score.score < bestScore.score) {
+        bestCandidate = candidate;
+        bestScore = score;
+      }
+    });
+
+    if (bestCandidate && bestScore.score <= 3) {
+      matchedBooliIds.add(booliEntry.id);
+      matchedHemnetIds.add(bestCandidate.id);
+      const groupId = `group-${groups.length + 1}`;
+      groups.push({
+        id: groupId,
+        booli: [booliEntry],
+        hemnet: [bestCandidate],
+        matchScore: bestScore,
+      });
+    }
+  });
+
+  const mergedRecords = groups.map((group) => createMergedRecord(group));
+
+  const unmatchedBooli = normalizedBooli.filter(
+    (entry) => !matchedBooliIds.has(entry.id)
+  );
+  const unmatchedHemnet = normalizedHemnet.filter(
+    (entry) => !matchedHemnetIds.has(entry.id)
+  );
+
+  return {
+    combined: [...mergedRecords, ...unmatchedBooli, ...unmatchedHemnet],
+    groups,
+  };
+}
+
+function buildEntriesByAddress(entries) {
+  return entries.reduce((lookup, entry) => {
+    const key = normalizeAddress(entry.address);
+    if (!key) {
+      return lookup;
+    }
+    if (!lookup.has(key)) {
+      lookup.set(key, []);
+    }
+    lookup.get(key).push(entry);
+    return lookup;
+  }, new Map());
+}
+
+function normalizeAddress(address) {
+  return (address || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function evaluateMatch(a, b) {
+  const timestampA = getSoldTimestamp(a);
+  const timestampB = getSoldTimestamp(b);
+
+  if (timestampA === null || timestampB === null) {
+    return null;
+  }
+
+  const diffMs = Math.abs(timestampA - timestampB);
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (diffDays > 2) {
+    return null;
+  }
+
+  const finalDiff = calculatePercentDiff(a.finalPrice, b.finalPrice);
+  if (!Number.isFinite(finalDiff) || finalDiff > 3) {
+    return null;
+  }
+
+  const askingDiff = calculatePercentDiff(a.askingPrice, b.askingPrice);
+  const percentDiff = calculatePercentDiff(a.percentChange, b.percentChange);
+
+  const score =
+    diffDays * 2 +
+    (Number.isFinite(finalDiff) ? finalDiff : 3) +
+    (Number.isFinite(askingDiff) ? askingDiff / 3 : 1) +
+    (Number.isFinite(percentDiff) ? percentDiff / 4 : 0.5);
+
+  return {
+    score,
+    diffDays,
+    finalDiff,
+    askingDiff,
+    percentDiff,
+  };
+}
+
+function createMergedRecord(group) {
+  const { booli, hemnet, id } = group;
+  const orderedEntries = [...booli, ...hemnet];
+  const primary = booli[0] || hemnet[0];
+
+  const askingPrice = getPreferredValue(orderedEntries, "askingPrice", primary.askingPrice);
+  const finalPrice = getPreferredValue(orderedEntries, "finalPrice", primary.finalPrice);
+
+  let percentChange = null;
+  if (Number.isFinite(askingPrice) && Number.isFinite(finalPrice) && askingPrice) {
+    percentChange = ((finalPrice - askingPrice) / askingPrice) * 100;
+  }
+  if (!Number.isFinite(percentChange)) {
+    percentChange = getPreferredValue(orderedEntries, "percentChange", primary.percentChange);
+  }
+
+  return {
+    ...primary,
+    id: `${primary.id}-merged`,
+    source: "kombinerad",
+    askingPrice: Number.isFinite(askingPrice) ? askingPrice : primary.askingPrice,
+    finalPrice: Number.isFinite(finalPrice) ? finalPrice : primary.finalPrice,
+    percentChange: Number.isFinite(percentChange)
+      ? percentChange
+      : primary.percentChange,
+    matchedGroupId: id,
+    matchedEntries: {
+      booli: booli.map((entry) => ({ ...entry })),
+      hemnet: hemnet.map((entry) => ({ ...entry })),
+    },
+  };
+}
+
+function getPreferredValue(entries, key, fallback) {
+  for (const entry of entries) {
+    const value = entry[key];
+    if (typeof value === "number" && Number.isFinite(value) && value !== 0) {
+      return value;
+    }
+  }
+  return fallback;
+}
+
+function calculatePercentDiff(a, b) {
+  if (!Number.isFinite(a) || !Number.isFinite(b) || (a === 0 && b === 0)) {
+    return Infinity;
+  }
+  const diff = Math.abs(a - b);
+  const denominator = Math.abs((a + b) / 2) || Math.max(Math.abs(a), Math.abs(b)) || 1;
+  return (diff / denominator) * 100;
 }
 
 function formatPrice(value) {
